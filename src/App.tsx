@@ -4,7 +4,7 @@ import DailyEntry from './components/DailyEntry';
 import ExportPanel from './components/ExportPanel';
 import { loadCloudEntries, saveDayToCloud } from './lib/cloudStorage';
 import { todayIso } from './lib/dates';
-import { buildEmptyDay, buildNextDayEntries, StockEntry } from './lib/stock';
+import { buildEmptyDay, buildNextDayEntries, markDayFinal, markDayUpdated, StockEntry } from './lib/stock';
 import { loadEntries, mergeEntries, saveEntries, upsertDay } from './lib/storage';
 
 export default function App() {
@@ -43,17 +43,26 @@ export default function App() {
 
   const savedDates = useMemo(() => [...new Set(entries.map((entry) => entry.date))].length, [entries]);
 
-  async function saveDay() {
-    const next = upsertDay(entries, dayEntries);
+  async function persistDay(entriesToPersist: StockEntry[], message: string) {
+    const next = upsertDay(entries, entriesToPersist);
+    setDayEntries(entriesToPersist);
     setEntries(next);
     saveEntries(next);
     setSyncStatus('Saving cloud backup...');
     try {
-      await saveDayToCloud(dayEntries);
-      setSyncStatus('Cloud backup saved');
+      await saveDayToCloud(entriesToPersist);
+      setSyncStatus(message);
     } catch {
       setSyncStatus('Saved on phone. Cloud backup failed.');
     }
+  }
+
+  function updateNow() {
+    void persistDay(markDayUpdated(dayEntries, new Date().toISOString()), 'Progress update synced');
+  }
+
+  function finalSaveDay() {
+    void persistDay(markDayFinal(dayEntries, new Date().toISOString()), 'Final day saved and synced');
   }
 
   return (
@@ -65,7 +74,7 @@ export default function App() {
           <p className="sync-status">{syncStatus}</p>
         </div>
       </header>
-      <DailyEntry date={date} entries={dayEntries} onDateChange={setDate} onChange={setDayEntries} onSave={saveDay} />
+      <DailyEntry date={date} entries={dayEntries} onDateChange={setDate} onChange={setDayEntries} onUpdate={updateNow} onFinalSave={finalSaveDay} />
       <Dashboard entries={entries} />
       <ExportPanel entries={entries} />
     </main>

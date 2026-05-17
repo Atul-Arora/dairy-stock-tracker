@@ -14,6 +14,9 @@ const base: StockEntry = {
   stockoutTime: '',
   missedCustomersCount: 0,
   notes: '',
+  isFinal: false,
+  lastUpdatedAt: '',
+  finalSavedAt: '',
 };
 
 describe('mergeEntries', () => {

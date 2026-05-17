@@ -6,10 +6,11 @@ type Props = {
   entries: StockEntry[];
   onDateChange: (date: string) => void;
   onChange: (entries: StockEntry[]) => void;
-  onSave: () => void;
+  onUpdate: () => void;
+  onFinalSave: () => void;
 };
 
-export default function DailyEntry({ date, entries, onDateChange, onChange, onSave }: Props) {
+export default function DailyEntry({ date, entries, onDateChange, onChange, onUpdate, onFinalSave }: Props) {
   function patch(index: number, changes: Partial<StockEntry>) {
     onChange(entries.map((entry, current) => current === index ? { ...entry, ...changes } : entry));
   }
@@ -18,8 +19,12 @@ export default function DailyEntry({ date, entries, onDateChange, onChange, onSa
     <section>
       <div className="toolbar">
         <label>Date <input type="date" value={date} onChange={(event) => onDateChange(event.target.value)} /></label>
-        <button onClick={onSave}>Save day</button>
+        <div className="button-row">
+          <button onClick={onUpdate}>Update now</button>
+          <button onClick={onFinalSave}>Final save day</button>
+        </div>
       </div>
+      <p className="hint">Use Update now during the day. Use Final save day at closing time.</p>
       <div className="product-grid">
         {entries.map((entry, index) => {
           const product = PRODUCTS.find((item) => item.id === entry.product)!;
@@ -41,6 +46,7 @@ export default function DailyEntry({ date, entries, onDateChange, onChange, onSa
                 <button onClick={() => patch(index, { missedCustomersCount: entry.missedCustomersCount + 1 })}>+1 missed customer</button>
               </div>
               <label>Notes <textarea value={entry.notes} onChange={(event) => patch(index, { notes: event.target.value })} /></label>
+              {entry.isFinal && <p className="final-badge">Final saved</p>}
             </article>
           );
         })}

@@ -95,6 +95,28 @@ header,
   gap: 12px;
 }
 
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hint {
+  color: #666;
+  margin: 10px 0 0;
+}
+
+.final-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #e4f5ea;
+  color: #156b43;
+  font-weight: 700;
+}
+
 @media (min-width: 760px) {
   .product-grid {
     grid-template-columns: repeat(3, 1fr);

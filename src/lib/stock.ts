@@ -13,6 +13,9 @@ export type StockEntry = {
   stockoutTime: string;
   missedCustomersCount: number;
   notes: string;
+  isFinal: boolean;
+  lastUpdatedAt: string;
+  finalSavedAt: string;
 };
 
 export function expectedClosing(input: Pick<StockEntry, 'openingQty' | 'madeOrReceivedQty' | 'soldQty' | 'wastedQty'>): number {
@@ -37,6 +40,9 @@ export function buildEmptyDay(date: string): StockEntry[] {
     stockoutTime: '',
     missedCustomersCount: 0,
     notes: '',
+    isFinal: false,
+    lastUpdatedAt: '',
+    finalSavedAt: '',
   }));
 }
 
@@ -56,8 +62,29 @@ export function buildNextDayEntries(date: string, previousEntries: StockEntry[])
       stockoutTime: '',
       missedCustomersCount: 0,
       notes: '',
+      isFinal: false,
+      lastUpdatedAt: '',
+      finalSavedAt: '',
     };
   });
+}
+
+export function markDayUpdated(entries: StockEntry[], timestamp: string): StockEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    isFinal: false,
+    lastUpdatedAt: timestamp,
+    finalSavedAt: '',
+  }));
+}
+
+export function markDayFinal(entries: StockEntry[], timestamp: string): StockEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    isFinal: true,
+    lastUpdatedAt: timestamp,
+    finalSavedAt: timestamp,
+  }));
 }
 
 export function weekdayAverageSold(entries: StockEntry[], product: ProductId, weekday: Weekday): number {
