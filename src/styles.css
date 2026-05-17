@@ -74,6 +74,12 @@ header,
   margin: 0;
 }
 
+.sync-status {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 4px 0 0;
+}
+
 .warning {
   margin: 0;
   padding: 8px;

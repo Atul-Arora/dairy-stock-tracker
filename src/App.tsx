@@ -2,16 +2,32 @@ import { useEffect, useMemo, useState } from 'react';
 import Dashboard from './components/Dashboard';
 import DailyEntry from './components/DailyEntry';
 import ExportPanel from './components/ExportPanel';
+import { loadCloudEntries, saveDayToCloud } from './lib/cloudStorage';
 import { todayIso } from './lib/dates';
 import { buildEmptyDay, buildNextDayEntries, StockEntry } from './lib/stock';
-import { loadEntries, saveEntries, upsertDay } from './lib/storage';
+import { loadEntries, mergeEntries, saveEntries, upsertDay } from './lib/storage';
 
 export default function App() {
   const [entries, setEntries] = useState<StockEntry[]>([]);
   const [date, setDate] = useState(todayIso());
   const [dayEntries, setDayEntries] = useState<StockEntry[]>([]);
+  const [syncStatus, setSyncStatus] = useState('Loading local data...');
 
-  useEffect(() => setEntries(loadEntries()), []);
+  useEffect(() => {
+    const localEntries = loadEntries();
+    setEntries(localEntries);
+    setSyncStatus('Syncing cloud backup...');
+    loadCloudEntries()
+      .then((cloudEntries) => {
+        const merged = mergeEntries(localEntries, cloudEntries);
+        setEntries(merged);
+        saveEntries(merged);
+        setSyncStatus(`Cloud synced: ${merged.length} records`);
+      })
+      .catch(() => {
+        setSyncStatus('Offline/local mode: cloud sync failed');
+      });
+  }, []);
 
   useEffect(() => {
     const existing = entries.filter((entry) => entry.date === date);
@@ -27,17 +43,27 @@ export default function App() {
 
   const savedDates = useMemo(() => [...new Set(entries.map((entry) => entry.date))].length, [entries]);
 
-  function saveDay() {
+  async function saveDay() {
     const next = upsertDay(entries, dayEntries);
     setEntries(next);
     saveEntries(next);
+    setSyncStatus('Saving cloud backup...');
+    try {
+      await saveDayToCloud(dayEntries);
+      setSyncStatus('Cloud backup saved');
+    } catch {
+      setSyncStatus('Saved on phone. Cloud backup failed.');
+    }
   }
 
   return (
     <main className="app">
       <header>
         <h1>Dairy Stock</h1>
-        <p>{savedDates} saved days</p>
+        <div>
+          <p>{savedDates} saved days</p>
+          <p className="sync-status">{syncStatus}</p>
+        </div>
       </header>
       <DailyEntry date={date} entries={dayEntries} onDateChange={setDate} onChange={setDayEntries} onSave={saveDay} />
       <Dashboard entries={entries} />

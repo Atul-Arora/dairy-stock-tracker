@@ -18,3 +18,14 @@ export function upsertDay(entries: StockEntry[], dayEntries: StockEntry[]): Stoc
   if (!date) return entries;
   return [...entries.filter((entry) => entry.date !== date), ...dayEntries].sort((a, b) => a.date.localeCompare(b.date));
 }
+
+export function mergeEntries(localEntries: StockEntry[], cloudEntries: StockEntry[]): StockEntry[] {
+  const byKey = new Map<string, StockEntry>();
+  for (const entry of localEntries) byKey.set(entryKey(entry), entry);
+  for (const entry of cloudEntries) byKey.set(entryKey(entry), entry);
+  return [...byKey.values()].sort((a, b) => `${a.date}-${a.product}`.localeCompare(`${b.date}-${b.product}`));
+}
+
+function entryKey(entry: StockEntry): string {
+  return `${entry.date}_${entry.product}`;
+}
